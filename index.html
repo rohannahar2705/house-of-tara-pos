@@ -1,174 +1,430 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>House Of Tara — Offline Inventory & POS</title>
-  <!-- FIX: relative path to manifest -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#7b3f98">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>House Of Tara — Offline Inventory & POS</title>
 
-  <style>
-    :root{--accent:#7b3f98;--muted:#666}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f6f8;color:#222}
-    header{background:var(--accent);color:white;padding:12px 18px;display:flex;align-items:center;gap:12px}
-    header h1{font-size:18px;margin:0}
-    main{padding:18px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap}
-    .tabs button{background:white;border-radius:8px;padding:8px 12px;border:1px solid rgba(0,0,0,0.08);cursor:pointer}
-    .card{background:white;padding:14px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-top:12px}
-    form .row{display:flex;gap:8px;flex-wrap:wrap}
-    label{font-size:13px;color:var(--muted)}
-    input,select,button{padding:8px;border-radius:6px;border:1px solid #ddd}
-    table{width:100%;border-collapse:collapse}
-    table th,table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-    .small{font-size:13px;color:var(--muted)}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-    .btn.secondary{background:#eee;color:#222}
-    .right{margin-left:auto}
-    @media print{ header, .tabs, .btn, .controls{display:none} .label{border:1px solid #000} }
-    .label-sheet{width:210mm;height:297mm;padding:12mm;box-sizing:border-box}
-    .label-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6mm}
-    .label-cell{border:1px dashed transparent;padding:4mm;display:flex;flex-direction:column;justify-content:center;align-items:center}
-    .barcode-canvas{width:100%;height:28mm}
-    .sale-rows{display:flex;flex-direction:column;gap:6px}
-    .sale-row{display:flex;gap:6px;align-items:center}
-    .sale-row input{flex:1}
-  </style>
+<!-- IMPORTANT: relative path (no leading slash) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7b3f98">
+
+<style>
+:root{--accent:#7b3f98;--muted:#666}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f6f8;color:#222}
+header{background:var(--accent);color:white;padding:12px 18px;display:flex;align-items:center;gap:12px}
+header h1{font-size:18px;margin:0}
+main{padding:18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{background:white;border-radius:8px;padding:8px 12px;border:1px solid rgba(0,0,0,0.08);cursor:pointer}
+.card{background:white;padding:14px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-top:12px}
+form .row{display:flex;gap:8px;flex-wrap:wrap}
+label{font-size:13px;color:var(--muted)}
+input,select,button{padding:8px;border-radius:6px;border:1px solid #ddd}
+table{width:100%;border-collapse:collapse}
+table th,table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+.small{font-size:13px;color:var(--muted)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.btn.secondary{background:#eee;color:#222}
+.right{margin-left:auto}
+@media print{ header, .tabs, .btn, .controls{display:none} .label{border:1px solid #000} }
+.label-sheet{width:210mm;height:297mm;padding:12mm;box-sizing:border-box}
+.label-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6mm}
+.label-cell{border:1px dashed transparent;padding:4mm;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.barcode-canvas{width:100%;height:28mm}
+.sale-rows{display:flex;flex-direction:column;gap:6px}
+.sale-row{display:flex;gap:6px;align-items:center}
+.sale-row input{flex:1}
+.install-hint{position:fixed;left:16px;bottom:18px;padding:8px 10px;background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);font-size:13px}
+</style>
 </head>
 <body>
-  <header>
-    <h1>House Of Tara — Offline Inventory & POS</h1>
-    <div class="right small">Offline — data stored locally in your browser (IndexedDB)</div>
-  </header>
+<header>
+  <h1>House Of Tara — Offline Inventory & POS</h1>
+  <div class="right small">Offline — data stored locally in your browser (IndexedDB)</div>
+</header>
 
-  <main>
-    <div class="tabs">
-      <button id="tab-inventory">Add Inventory</button>
-      <button id="tab-check">Check Inventory</button>
-      <button id="tab-sale">Sale</button>
-      <button id="tab-viewsales">View Sales</button>
-      <button id="tab-labels">Labels</button>
-      <button id="tab-data">Data</button>
+<main>
+  <div class="tabs">
+    <button id="tab-inventory">Add Inventory</button>
+    <button id="tab-check">Check Inventory</button>
+    <button id="tab-sale">Sale</button>
+    <button id="tab-viewsales">View Sales</button>
+    <button id="tab-labels">Labels</button>
+    <button id="tab-data">Data</button>
+  </div>
+
+  <section id="section-inventory" class="card">
+    <h3>Add / Edit Inventory</h3>
+    <form id="form-inv">
+      <div class="row">
+        <div style="flex:1">
+          <label>Product Name</label><br>
+          <input id="p-name" required />
+        </div>
+        <div style="width:160px">
+          <label>SKU</label><br>
+          <input id="p-sku" required />
+        </div>
+        <div style="width:120px">
+          <label>Cost Price</label><br>
+          <input id="p-cost" type="number" step="0.01" required />
+        </div>
+        <div style="width:120px">
+          <label>Selling Price</label><br>
+          <input id="p-sell" type="number" step="0.01" required />
+        </div>
+        <div style="width:100px">
+          <label>Stock</label><br>
+          <input id="p-stock" type="number" step="1" value="0" required />
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn" type="submit">Save Item</button>
+        <button class="btn secondary" type="button" id="inv-clear">Clear Form</button>
+      </div>
+    </form>
+    <div class="card" style="margin-top:12px">
+      <h4>Inventory List (select to add to label)</h4>
+      <div id="inv-list"></div>
     </div>
+  </section>
 
-    <!-- Inventory Section -->
-    <section id="section-inventory" class="card">
-      <h3>Add / Edit Inventory</h3>
-      <form id="form-inv">
-        <div class="row">
-          <div style="flex:1">
-            <label>Product Name</label><br>
-            <input id="p-name" required />
-          </div>
-          <div style="width:160px">
-            <label>SKU</label><br>
-            <input id="p-sku" required />
-          </div>
-          <div style="width:120px">
-            <label>Cost Price</label><br>
-            <input id="p-cost" type="number" step="0.01" required />
-          </div>
-          <div style="width:120px">
-            <label>Selling Price</label><br>
-            <input id="p-sell" type="number" step="0.01" required />
-          </div>
-          <div style="width:100px">
-            <label>Stock</label><br>
-            <input id="p-stock" type="number" step="1" value="0" required />
-          </div>
-        </div>
-        <div class="controls">
-          <button class="btn" type="submit">Save Item</button>
-          <button class="btn secondary" type="button" id="inv-clear">Clear Form</button>
-        </div>
-      </form>
-      <div class="card" style="margin-top:12px">
-        <h4>Inventory List (select to add to label)</h4>
-        <div id="inv-list"></div>
+  <section id="section-check" class="card" style="display:none">
+    <h3>Check Inventory</h3>
+    <label>Search by Name or SKU</label><br>
+    <input id="search-inv" placeholder="Type name or SKU" style="width:100%;margin-top:6px" />
+    <div class="card" style="margin-top:12px">
+      <table id="table-check"><thead><tr><th>SKU</th><th>Name</th><th>Stock</th><th>Cost</th><th>Selling</th></tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <section id="section-sale" class="card" style="display:none">
+    <h3>Sale / POS</h3>
+    <label>Customer Name</label><br>
+    <input id="sale-cust" placeholder="Customer name (optional)" style="width:100%;margin-top:6px" />
+    <div class="card" style="margin-top:10px">
+      <div class="sale-rows" id="sale-rows"></div>
+      <div class="controls">
+        <button class="btn" id="add-sale-row" type="button">Add Product Row</button>
+        <button class="btn secondary" id="clear-sale" type="button">Clear Rows</button>
       </div>
-    </section>
-
-    <!-- Other sections (Check, Sale, View Sales, Labels, Data) -->
-    <section id="section-check" class="card" style="display:none">
-      <h3>Check Inventory</h3>
-      <label>Search by Name or SKU</label><br>
-      <input id="search-inv" placeholder="Type name or SKU" style="width:100%;margin-top:6px" />
-      <div class="card" style="margin-top:12px">
-        <table id="table-check"><thead><tr><th>SKU</th><th>Name</th><th>Stock</th><th>Cost</th><th>Selling</th></tr></thead><tbody></tbody></table>
-      </div>
-    </section>
-
-    <section id="section-sale" class="card" style="display:none">
-      <h3>Sale / POS</h3>
-      <label>Customer Name</label><br>
-      <input id="sale-cust" placeholder="Customer name (optional)" style="width:100%;margin-top:6px" />
-      <div class="card" style="margin-top:10px">
-        <div class="sale-rows" id="sale-rows"></div>
-        <div class="controls">
-          <button class="btn" id="add-sale-row" type="button">Add Product Row</button>
-          <button class="btn secondary" id="clear-sale" type="button">Clear Rows</button>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-          <div style="font-weight:600">Total: ₹ <span id="sale-total">0.00</span></div>
-          <div class="right">
-            <button class="btn" id="submit-sale">Submit Sale (Save & Print Bill)</button>
-          </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <div style="font-weight:600">Total: ₹ <span id="sale-total">0.00</span></div>
+        <div class="right">
+          <button class="btn" id="submit-sale">Submit Sale (Save & Print Bill)</button>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="section-viewsales" class="card" style="display:none">
-      <h3>View Sales</h3>
-      <div id="sales-list"></div>
-    </section>
+  <section id="section-viewsales" class="card" style="display:none">
+    <h3>View Sales</h3>
+    <div id="sales-list"></div>
+  </section>
 
-    <section id="section-labels" class="card" style="display:none">
-      <h3>Labels</h3>
-      <div id="labels-output"></div>
-    </section>
+  <section id="section-labels" class="card" style="display:none">
+    <h3>Labels</h3>
+    <div class="small">Select items below then click <strong>Create Labels</strong> to produce a printable sheet with 24 labels per A4 (4 columns x 6 rows default).</div>
+    <div class="controls" style="margin-top:8px">
+      <button class="btn" id="create-labels">Create Labels</button>
+      <button class="btn secondary" id="clear-selection">Clear Selection</button>
+      <div class="right small">Labels use local copy of JsBarcode if placed as <code>jsbarcode.min.js</code> in the same folder.</div>
+    </div>
+    <div id="labels-output" style="margin-top:12px"></div>
+  </section>
 
-    <section id="section-data" class="card" style="display:none">
-      <h3>Data — Export / Import / Migrate</h3>
-      <div id="data-msg"></div>
-    </section>
-  </main>
+  <section id="section-data" class="card" style="display:none">
+    <h3>Data — Export / Import / Migrate</h3>
+    <div class="controls">
+      <button class="btn" id="export-inv">Export Inventory (JSON)</button>
+      <button class="btn" id="export-sales">Export Sales (JSON)</button>
+      <label class="btn secondary" style="cursor:pointer"><input id="import-file" type="file" accept=".json" style="display:none"> Import JSON</label>
+      <button class="btn secondary" id="migrate">Migrate from localStorage (if any)</button>
+    </div>
+    <div style="margin-top:12px" id="data-msg"></div>
+  </section>
 
-  <!-- Install button -->
-  <button id="install-btn" style="position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:10px;background:#7b3f98;color:#fff;border:none;display:none;z-index:9999;">Install App</button>
+</main>
 
-  <script>
-    // Service worker registration — FIXED path
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(()=>console.log('SW registered'))
-        .catch(e=>console.warn('SW failed', e));
+<!-- Install button -->
+<button id="install-btn" style="position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:10px;background:#7b3f98;color:#fff;border:none;display:none;z-index:9999;">Install App</button>
+
+<script>
+// --- IndexedDB wrapper ---
+const DB_NAME = 'hot_db_v1';
+const DB_VERSION = 1;
+const STORE_INV = 'inventory';
+const STORE_SALES = 'sales';
+
+function openDB(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(STORE_INV)){
+        const s = db.createObjectStore(STORE_INV, { keyPath: 'sku' });
+        s.createIndex('name', 'name', { unique: false });
+      }
+      if(!db.objectStoreNames.contains(STORE_SALES)){
+        db.createObjectStore(STORE_SALES, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbPut(store, value){
+  const db = await openDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(value);
+    tx.oncomplete = ()=>res(true);
+    tx.onerror = ()=>rej(tx.error);
+  });
+}
+async function idbGetAll(store){
+  const db = await openDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = ()=>rej(req.error);
+  });
+}
+async function idbGet(store, key){
+  const db = await openDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = ()=>rej(req.error);
+  });
+}
+async function idbDelete(store, key){
+  const db = await openDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = ()=>res(true);
+    tx.onerror = ()=>rej(tx.error);
+  });
+}
+
+// --- App logic using IndexedDB ---
+async function saveInvItem(item){
+  await idbPut(STORE_INV, item);
+  await renderInvList();
+  await renderCheckTable();
+}
+async function deleteInvSku(sku){
+  await idbDelete(STORE_INV, sku);
+  await renderInvList();
+  await renderCheckTable();
+}
+async function getAllInventory(){ return await idbGetAll(STORE_INV); }
+async function getAllSales(){ return await idbGetAll(STORE_SALES); }
+async function saveSale(entry){
+  await idbPut(STORE_SALES, entry);
+  // reduce stock
+  for(const it of entry.items){
+    const inv = await idbGet(STORE_INV, it.sku);
+    if(inv){ inv.stock = Math.max(0, (parseInt(inv.stock)||0) - it.qty); await idbPut(STORE_INV, inv); }
+  }
+  await renderInvList();
+  await renderSalesList();
+}
+
+// --- UI & interactions ---
+const tabs = {inv:document.getElementById('section-inventory'), check:document.getElementById('section-check'), sale:document.getElementById('section-sale'), viewsales:document.getElementById('section-viewsales'), labels:document.getElementById('section-labels'), data:document.getElementById('section-data')};
+function showTab(key){ Object.values(tabs).forEach(s=>s.style.display='none'); tabs[key].style.display='block'; }
+document.getElementById('tab-inventory').onclick=()=>showTab('inv');
+document.getElementById('tab-check').onclick=()=>showTab('check');
+document.getElementById('tab-sale').onclick=()=>showTab('sale');
+document.getElementById('tab-viewsales').onclick=()=>showTab('viewsales');
+document.getElementById('tab-labels').onclick=()=>showTab('labels');
+document.getElementById('tab-data').onclick=()=>showTab('data');
+
+// Form submit
+document.getElementById('form-inv').onsubmit = async function(e){
+  e.preventDefault();
+  const name=document.getElementById('p-name').value.trim();
+  const sku=document.getElementById('p-sku').value.trim();
+  const cost=parseFloat(document.getElementById('p-cost').value)||0;
+  const sell=parseFloat(document.getElementById('p-sell').value)||0;
+  const stock=parseInt(document.getElementById('p-stock').value)||0;
+  if(!name||!sku){ alert('Name and SKU required'); return; }
+  await saveInvItem({name,sku,cost,sell,stock});
+  this.reset();
+};
+
+// Inv rendering
+async function renderInvList(){
+  const inventory = await getAllInventory();
+  const container = document.getElementById('inv-list');
+  if(!inventory.length) return container.innerHTML='<div class="small">No items yet.</div>';
+  let html = '<table><thead><tr><th></th><th>SKU</th><th>Name</th><th>Stock</th><th>Cost</th><th>Selling</th><th>Actions</th></tr></thead><tbody>';
+  inventory.forEach((it)=>{
+    html += `<tr><td><input data-sku="${it.sku}" type="checkbox" class="label-checkbox" /></td><td>${it.sku}</td><td>${it.name}</td><td>${it.stock}</td><td>${it.cost}</td><td>${it.sell}</td><td><button data-sku="${it.sku}" class="edit-item">Edit</button> <button data-sku="${it.sku}" class="del-item">Delete</button></td></tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  container.querySelectorAll('.edit-item').forEach(b=>b.onclick=async (e)=>{ const sku = e.target.dataset.sku; const it = await idbGet(STORE_INV, sku); if(it){ document.getElementById('p-name').value=it.name; document.getElementById('p-sku').value=it.sku; document.getElementById('p-cost').value=it.cost; document.getElementById('p-sell').value=it.sell; document.getElementById('p-stock').value=it.stock; }});
+  container.querySelectorAll('.del-item').forEach(b=>b.onclick=async (e)=>{ const sku = e.target.dataset.sku; if(confirm('Delete this item?')){ await deleteInvSku(sku); }});
+}
+
+// Check table
+async function renderCheckTable(filter=''){
+  const tbody = document.querySelector('#table-check tbody'); tbody.innerHTML='';
+  const q = filter.trim().toLowerCase();
+  const inventory = await getAllInventory();
+  inventory.filter(it=>!q || it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q)).forEach(it=>{
+    const tr = document.createElement('tr'); tr.innerHTML = `<td>${it.sku}</td><td>${it.name}</td><td>${it.stock}</td><td>${it.cost}</td><td>${it.sell}</td>`; tbody.appendChild(tr);
+  });
+}
+document.getElementById('search-inv').addEventListener('input', e=>renderCheckTable(e.target.value));
+
+// Labels
+function getSelectedForLabels(){ const checks = Array.from(document.querySelectorAll('.label-checkbox')); return checks.filter(c=>c.checked).map(c=>c.dataset.sku); }
+document.getElementById('create-labels').onclick = async ()=>{
+  const selectedSkus = getSelectedForLabels(); if(!selectedSkus.length){ alert('Select items from Inventory list first (Add Inventory tab)'); return }
+  const out = document.getElementById('labels-output'); out.innerHTML='';
+  const items = await Promise.all(selectedSkus.map(sku=>idbGet(STORE_INV, sku)));
+  const perPage = 24; const pages = Math.ceil(items.length/perPage);
+  for(let p=0;p<pages;p++){
+    const pageItems = items.slice(p*perPage, (p+1)*perPage);
+    const sheet = document.createElement('div'); sheet.className='label-sheet card';
+    const grid = document.createElement('div'); grid.className='label-grid';
+    for(let i=0;i<perPage;i++){
+      const cell = document.createElement('div'); cell.className='label-cell';
+      const it = pageItems[i];
+      if(it){
+        const name = document.createElement('div'); name.textContent = it.name; name.style.fontSize='12px'; name.style.fontWeight='600'; name.style.marginBottom='6px';
+        const canvas = document.createElement('canvas'); canvas.className='barcode-canvas'; canvas.width = 300; canvas.height=80;
+        const skuText = document.createElement('div'); skuText.textContent = it.sku; skuText.style.fontSize='11px'; skuText.style.marginTop='6px';
+        cell.appendChild(name); cell.appendChild(canvas); cell.appendChild(skuText);
+        try{ if(window.JsBarcode){ JsBarcode(canvas, it.sku, {format:"CODE128",displayValue:false,height:40}); } else renderFallbackBarcode(canvas,it.sku); }catch(err){ renderFallbackBarcode(canvas,it.sku); }
+      }
+      grid.appendChild(cell);
     }
+    sheet.appendChild(grid); out.appendChild(sheet);
+  }
+  setTimeout(()=>window.print(), 500);
+}
+document.getElementById('clear-selection').onclick = ()=>{ document.querySelectorAll('.label-checkbox').forEach(c=>c.checked=false); }
+function renderFallbackBarcode(canvas, text){ const ctx = canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#000'; const w = canvas.width; const h = canvas.height; const seed = text.split('').reduce((a,c)=>a + c.charCodeAt(0),0); let x=4; for(let i=0;i<text.length;i++){ const ch = text.charCodeAt(i); const stripe = (ch + seed) % 6 + 1; ctx.fillRect(x,4,stripe, h-12); x += stripe + 2; if(x> w-10) break; } }
 
-    // Install button logic
-    let deferredPrompt = null;
-    const installBtn = document.getElementById('install-btn');
+// Sales UI
+const saleRowsContainer = document.getElementById('sale-rows');
+function recalcSaleTotal(){ let total=0; document.querySelectorAll('.sale-row').forEach(r=>{ const qty = +r.querySelector('.sale-qty').value || 0; const price = parseFloat(r.querySelector('.sale-price').value) || 0; total += qty * price; }); document.getElementById('sale-total').textContent = total.toFixed(2); }
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installBtn.style.display = 'block';
-    });
+function addSaleRow(data){ const div = document.createElement('div'); div.className='sale-row'; div.innerHTML = `
+  <input class="sale-sku" placeholder="SKU" style="width:180px" />
+  <input class="sale-name" placeholder="Product name" readonly />
+  <input class="sale-qty" type="number" value="1" style="width:80px" />
+  <input class="sale-price" type="number" step="0.01" style="width:120px" />
+  <button class="btn secondary sale-del" type="button">Del</button>
+`;
+ saleRowsContainer.appendChild(div);
+ const skuInput = div.querySelector('.sale-sku'); const nameInput = div.querySelector('.sale-name'); const qtyInput = div.querySelector('.sale-qty'); const priceInput = div.querySelector('.sale-price');
+ if(data){ skuInput.value=data.sku; nameInput.value=data.name; qtyInput.value=data.qty||1; priceInput.value=data.price; }
+ skuInput.addEventListener('change', async e=>{ const sku = e.target.value.trim(); const found = await idbGet(STORE_INV, sku); if(found){ nameInput.value = found.name; priceInput.value = found.sell; } else { nameInput.value=''; } recalcSaleTotal(); });
+ priceInput.addEventListener('input', recalcSaleTotal); qtyInput.addEventListener('input', recalcSaleTotal);
+ div.querySelector('.sale-del').onclick = ()=>{ div.remove(); recalcSaleTotal(); };
+ recalcSaleTotal();
+}
+document.getElementById('add-sale-row').onclick = ()=>addSaleRow();
+document.getElementById('clear-sale').onclick = ()=>{ saleRowsContainer.innerHTML=''; recalcSaleTotal(); }
 
-    installBtn.addEventListener('click', async () => {
-      if(!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      console.log('User choice:', choice.outcome);
-      deferredPrompt = null;
-      installBtn.style.display = 'none';
-    });
+// Submit sale handler
+document.getElementById('submit-sale').onclick = async ()=>{
+  const rows = Array.from(document.querySelectorAll('.sale-row'));
+  if(!rows.length){ alert('Add at least one product'); return }
+  const entry = { id: 'S' + Date.now(), customer: document.getElementById('sale-cust').value.trim(), createdAt: new Date().toISOString(), items: [], total:0 };
+  for(const r of rows){ const sku = r.querySelector('.sale-sku').value.trim(); const name = r.querySelector('.sale-name').value.trim(); const qty = parseInt(r.querySelector('.sale-qty').value)||0; const price = parseFloat(r.querySelector('.sale-price').value)||0; if(!sku||!name||qty<=0) continue; const inv = await idbGet(STORE_INV, sku); const cost = inv ? parseFloat(inv.cost) : 0; entry.items.push({sku,name,qty,price,cost}); entry.total += qty * price; }
+  await saveSale(entry);
+  // print bill
+  const w = window.open('','_blank'); const now = new Date(entry.createdAt);
+  let billHtml = `<html><head><title>Bill ${entry.id}</title><style>body{font-family:Arial;padding:12px}table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid #ddd}</style></head><body>`;
+  billHtml += `<h3>House Of Tara</h3><div>Sale ID: ${entry.id}</div><div>Date: ${now.toLocaleString()}</div><div>Customer: ${entry.customer||'--'}</div><table><thead><tr><th>SKU</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`;
+  entry.items.forEach(it=>{ billHtml += `<tr><td>${it.sku}</td><td>${it.name}</td><td>${it.qty}</td><td>${it.price.toFixed(2)}</td><td>${(it.qty*it.price).toFixed(2)}</td></tr>` });
+  billHtml += `</tbody></table><h4>Total: ₹ ${entry.total.toFixed(2)}</h4><div>Thank you for shopping with House Of Tara</div></body></html>`;
+  w.document.write(billHtml); w.document.close(); w.print();
+  document.getElementById('sale-cust').value=''; saleRowsContainer.innerHTML=''; recalcSaleTotal();
+}
 
-    window.addEventListener('appinstalled', () => {
-      console.log('App installed');
-      installBtn.style.display = 'none';
-    });
-  </script>
+// View sales
+async function renderSalesList(){
+  const container = document.getElementById('sales-list');
+  const sales = await getAllSales();
+  if(!sales.length) return container.innerHTML='<div class="small">No sales yet.</div>';
+  let html = '<table><thead><tr><th>Sale ID</th><th>Date</th><th>Items</th><th>Total</th><th>Profit</th></tr></thead><tbody>';
+  sales.slice().reverse().forEach(s=>{
+    const date = new Date(s.createdAt).toLocaleString();
+    const items = s.items.map(it=>`${it.name} (${it.sku}) x${it.qty}`).join('<br>');
+    const profit = s.items.reduce((a,it)=> a + ( (it.price - it.cost) * it.qty ),0);
+    html += `<tr><td>${s.id}</td><td>${date}</td><td>${items}</td><td>₹ ${s.total.toFixed(2)}</td><td>₹ ${profit.toFixed(2)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// --- Export / Import / Migrate ---
+function download(filename, content){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content],{type:'application/json'})); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+}
+document.getElementById('export-inv').onclick = async ()=>{ const inv = await getAllInventory(); download('inventory.json', JSON.stringify(inv,null,2)); };
+document.getElementById('export-sales').onclick = async ()=>{ const s = await getAllSales(); download('sales.json', JSON.stringify(s,null,2)); };
+
+document.getElementById('import-file').addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const txt = await f.text(); try{
+    const data = JSON.parse(txt);
+    // determine type (array of items or sales)
+    if(Array.isArray(data) && data.length && data[0].sku) {
+      // inventory import
+      for(const it of data) await idbPut(STORE_INV, it);
+      document.getElementById('data-msg').innerText = 'Imported inventory items.';
+    } else if(Array.isArray(data) && data.length && data[0].id){
+      for(const s of data) await idbPut(STORE_SALES, s);
+      document.getElementById('data-msg').innerText = 'Imported sales.';
+    } else {
+      document.getElementById('data-msg').innerText = 'Unknown JSON format.';
+    }
+    await renderInvList(); await renderSalesList(); await renderCheckTable();
+  }catch(err){ document.getElementById('data-msg').innerText = 'Invalid JSON file.'; }
+});
+
+document.getElementById('migrate').onclick = async ()=>{
+  // migrate from localStorage keys used in previous version
+  const invRaw = localStorage.getItem('hot_inv_items_v1');
+  const salesRaw = localStorage.getItem('hot_sales_v1');
+  let migrated = 0;
+  if(invRaw){
+    try{
+      const inv = JSON.parse(invRaw);
+      for(const it of inv){ await idbPut(STORE_INV, it); migrated++; }
+    }catch(e){}
+  }
+  if(salesRaw){
+    try{
+      const s = JSON.parse(salesRaw);
+      for(const sale of s){ await idbPut(STORE_SALES, sale); migrated++; }
+    }catch(e){}
+  }
+  document.getElementById('data-msg').innerText = migrated ? ('Migrated ' + migrated + ' records from localStorage.') : 'No localStorage data found to migrate.';
+  await renderInvList(); await renderSalesList(); await renderCheckTable();
+};
+
+// Initialize app: render lists and create one sale row
+(async function init(){
+  // register service worker (relative path)
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); }
+  await renderInvList(); await renderCheckTable(); await renderSalesList();
+  addSaleRow();
+})();
+</script>
 </body>
 </html>
