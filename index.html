@@ -418,5 +418,38 @@ document.getElementById('migrate').onclick = async ()=>{
   addSaleRow();
 })();
 </script>
+<!-- Install button (place near header or footer) -->
+<button id="install-btn" style="position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:10px;background:#7b3f98;color:#fff;border:none;display:none;z-index:9999;">Install App</button>
+
+<script>
+let deferredPrompt = null;
+const installBtn = document.getElementById('install-btn');
+
+// Listen for the event
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); // prevent automatic prompt
+  deferredPrompt = e;  // save the event
+  installBtn.style.display = 'block'; // show install button
+});
+
+// When user clicks install button
+installBtn.addEventListener('click', async () => {
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt(); // show the prompt
+  const choice = await deferredPrompt.userChoice;
+  if(choice && choice.outcome){
+    console.log('User choice:', choice.outcome); // accepted or dismissed
+  }
+  // Clear the saved prompt; it can only be used once.
+  deferredPrompt = null;
+  installBtn.style.display = 'none';
+});
+
+// Optional: hide button if app is already installed
+window.addEventListener('appinstalled', () => {
+  console.log('App installed');
+  installBtn.style.display = 'none';
+});
+</script>
 </body>
 </html>
