@@ -371,9 +371,95 @@ async function renderSalesList(){
   container.innerHTML = html;
 }
 
-// --- Export / Import / Migrate ---
-function download(filename, content){
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content],{type:'application/json'})); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+/* Replace the old download() with this robust version */
+async function download(filename, content){
+  try {
+    const blob = new Blob([content], { type: 'application/json' });
+
+    // Try File System Access API (desktop Chrome)
+    if (window.showSaveFilePicker) {
+      try {
+        const opts = {
+          suggestedName: filename,
+          types: [{
+            description: 'JSON',
+            accept: {'application/json': ['.json']}
+          }]
+        };
+        const handle = await window.showSaveFilePicker(opts);
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        alert('Export saved to your device.');
+        return;
+      } catch (err) {
+        console.warn('FS API save failed, falling back:', err);
+      }
+    }
+
+    // Default anchor-download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    // iOS standalone fallback
+    setTimeout(() => {
+      const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (isiOS && isStandalone) {
+        const win = window.open();
+        if (win) {
+          win.document.write('<pre>' + escapeHtml(content) + '</pre>');
+          win.document.title = filename;
+          alert('Opened JSON in a new window — save manually on iOS.');
+        } else {
+          copyToClipboard(content).then(()=> alert('Copied JSON to clipboard. Paste into a file and save.'));
+        }
+      }
+    }, 500);
+
+  } catch (err) {
+    console.error('Download failed:', err);
+    try {
+      await copyToClipboard(content);
+      alert('Export copied to clipboard. Paste into a text file and save as ' + filename);
+    } catch (e) {
+      alert('Unable to export file automatically. Please copy manually.');
+    }
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return;
+    } catch (err) {
+      document.body.removeChild(ta);
+      throw err;
+    }
+  }
+}
+
 }
 document.getElementById('export-inv').onclick = async ()=>{ const inv = await getAllInventory(); download('inventory.json', JSON.stringify(inv,null,2)); };
 document.getElementById('export-sales').onclick = async ()=>{ const s = await getAllSales(); download('sales.json', JSON.stringify(s,null,2)); };
