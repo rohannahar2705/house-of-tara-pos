@@ -1,51 +1,138 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>House Of Tara — Offline Inventory & POS</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#7b3f98">
-  <style>
-    :root{--accent:#7b3f98;--muted:#666}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f6f8;color:#222}
-    header{background:var(--accent);color:white;padding:12px 18px;display:flex;align-items:center;gap:12px}
-    header h1{font-size:18px;margin:0}
-    main{padding:18px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap}
-    .tabs button{background:white;border-radius:8px;padding:8px 12px;border:1px solid rgba(0,0,0,0.08);cursor:pointer}
-    .card{background:white;padding:14px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-top:12px}
-    form .row{display:flex;gap:8px;flex-wrap:wrap}
-    label{font-size:13px;color:var(--muted)}
-    input,select,button,textarea{padding:8px;border-radius:6px;border:1px solid #ddd}
-    table{width:100%;border-collapse:collapse}
-    table th,table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-    .small{font-size:13px;color:var(--muted)}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-    .btn.secondary{background:#eee;color:#222}
-    .right{margin-left:auto}
-    @media print{ header, .tabs, .btn, .controls{display:none} .label{border:1px solid #000} }
-    .label-sheet{width:210mm;height:297mm;padding:12mm;box-sizing:border-box}
-    .label-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6mm}
-    .label-cell{border:1px dashed transparent;padding:4mm;display:flex;flex-direction:column;justify-content:center;align-items:center}
-    .barcode-canvas{width:100%;height:28mm}
-    .sale-rows{display:flex;flex-direction:column;gap:6px}
-    .sale-row{display:flex;gap:6px;align-items:center}
-    .sale-row input{flex:1}
-    /* Install modal styles */
-    #hot-install-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); z-index:99999; }
-    #hot-install-modal .card { background:#fff; padding:18px; border-radius:10px; width:320px; box-shadow:0 8px 24px rgba(0,0,0,0.2); text-align:left; font-family:system-ui,Arial; }
-    #hot-install-modal h4{margin:0 0 8px 0}
-    #hot-install-modal p{margin:0 0 12px 0; color:#444; font-size:14px}
-    #hot-install-modal .actions{display:flex;gap:8px; justify-content:flex-end}
-    #hot-install-modal button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-    #hot-install-modal .btn-primary{background:#7b3f98;color:#fff}
-    #hot-install-modal .btn-secondary{background:#eee;color:#222}
-    /* iOS hint */
-    #hot-ios-hint{ position:fixed; left:12px; right:12px; bottom:18px; background:#fff; border-radius:10px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.12); display:none; z-index:99998; font-family:system-ui,Arial; }
-    #hot-ios-hint small{display:block;color:#666;margin-top:6px;font-size:12px;}
-  </style>
+  <header class="site-header">
+  <div class="header-left">
+    <img src="icons/icon-192.png" alt="House Of Tara" class="hot-logo" />
+    <div>
+      <div class="title">House Of Tara</div>
+      <div class="subtitle">Offline Inventory & POS</div>
+    </div>
+  </div>
+  <div class="header-right small">Offline — data saved locally (IndexedDB)</div>
+ <style>
+  :root{
+    --brand-deep: #0f5a40;   /* deep green from logo */
+    --brand-gold: #f0c65a;   /* warm gold accent */
+    --muted:#6b6b6b;
+    --bg:#f6f6f8;
+    --card:#ffffff;
+    --radius:10px;
+  }
+
+  /* Page layout */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+    margin:0;
+    background:var(--bg);
+    color:#222;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* Header */
+  .site-header{
+    background:linear-gradient(90deg,var(--brand-deep), #17694f 60%);
+    color: white;
+    padding:12px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .header-left{display:flex;align-items:center;gap:12px}
+  .hot-logo{width:44px;height:44px;border-radius:8px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.18)}
+  .title{font-size:16px;font-weight:700;line-height:1}
+  .subtitle{font-size:12px;opacity:0.95;margin-top:2px}
+  .header-right{font-size:13px;opacity:0.95}
+
+  /* Main */
+  main{padding:14px;max-width:1100px;margin:14px auto}
+
+  /* Tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .tabs button{
+    background:var(--card);
+    border-radius:8px;
+    padding:8px 12px;
+    border:1px solid rgba(0,0,0,0.06);
+    cursor:pointer;
+    font-weight:600;
+  }
+
+  /* Cards */
+  .card{
+    background:var(--card);
+    padding:14px;
+    border-radius:var(--radius);
+    box-shadow:0 6px 18px rgba(15,90,64,0.04);
+    margin-top:12px;
+  }
+
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  input,select,textarea,button{padding:8px;border-radius:8px;border:1px solid #e5e5e5;font-size:14px}
+  .small{font-size:13px;color:var(--muted)}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .btn{background:var(--brand-deep);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+  .btn.secondary{background:#efefef;color:#222}
+  .right{margin-left:auto}
+
+  /* Inventory form layout: responsive */
+  form .row{display:flex;gap:10px;flex-wrap:wrap}
+  form .row > div{min-width:0} /* allow shrinking */
+  form .row input, form .row select{width:100%}
+
+  /* Fine-tune column widths using utility inline styles still in HTML (we keep them) */
+  .controls .muted{color:var(--muted)}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  table th,table td{padding:10px;border-bottom:1px solid #f0f0f0;text-align:left;font-size:14px}
+  table thead th{font-weight:600;color:var(--muted);background:transparent}
+  .inv-list-wrap{overflow:auto;border-radius:8px}
+
+  /* Labels sheet */
+  .label-sheet{width:100%;box-sizing:border-box;padding:12px}
+  .label-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6mm}
+  .label-cell{padding:6px;border-radius:6px;border:1px dashed transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent}
+  .barcode-canvas{width:100%;height:auto;max-height:80px}
+
+  /* Sale rows responsive */
+  .sale-rows{display:flex;flex-direction:column;gap:8px}
+  .sale-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .sale-row input{flex:1;min-width:120px}
+  .sale-row .sale-qty{width:82px}
+  .sale-row .sale-price{width:120px}
+
+  /* Make tables scroll horizontally on small screens */
+  .table-responsive{overflow:auto}
+
+  /* Small screens adjustments */
+  @media (max-width:900px){
+    .label-grid{grid-template-columns:repeat(3,1fr)}
+    .hot-logo{width:40px;height:40px}
+    .title{font-size:15px}
+  }
+  @media (max-width:640px){
+    main{padding:12px}
+    .tabs{gap:6px}
+    .label-grid{grid-template-columns:repeat(2,1fr)}
+    .sale-row{align-items:flex-start}
+    .sale-row .sale-qty, .sale-row .sale-price{width:100%}
+    .right{margin-left:0;order:3;width:100%}
+    .controls{flex-direction:row;gap:8px}
+    table th,table td{padding:8px;font-size:13px}
+    .header-right{display:none} /* hide right text to save space on mobile */
+  }
+
+  /* Print */
+  @media print{
+    header, .tabs, .btn, .controls{display:none}
+    .label-sheet{page-break-after:always}
+  }
+</style>
 </head>
 <body>
   <header>
