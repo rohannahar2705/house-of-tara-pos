@@ -173,6 +173,70 @@
     header, .tabs, .btn, .controls{display:none}
     .label-sheet{page-break-after:always}
   }
+/* MOBILE EMERGENCY FIX: make app usable on narrow phones */
+@media (max-width: 520px) {
+
+  /* Hide the big hero/title block and install hint on phones */
+  .site-header .title,
+  .site-header .subtitle,
+  .site-header .header-right,
+  .header-left .small,
+  /* if you used a separate left hero element, hide it */
+  #hero, /* in case you have a hero id */
+  .hero-left,
+  .install-card,
+  #labels-output + .card, 
+  /* hide big decorative left column content */
+  .left-hero,
+  .install-box {
+    display: none !important;
+  }
+
+  /* Keep a tiny logo visible (small badge) */
+  .hot-logo{display:block;width:44px;height:44px;margin:6px auto;border-radius:8px}
+
+  /* Tabs: center and make buttons wrap */
+  .tabs{justify-content:center;gap:8px;margin:10px 0;display:flex;flex-wrap:wrap}
+  .tabs button{padding:7px 10px;font-size:13px}
+
+  /* Main container: full-width, single column */
+  main{padding:10px;margin:0 auto;max-width:720px;width:100%}
+  .card{margin:8px 6px;border-radius:12px;padding:12px}
+
+  /* Ensure inventory form stacks vertically */
+  form .row{flex-direction:column;gap:8px}
+  form .row > div{width:100%}
+  input, select, textarea{width:100%;max-width:100%}
+
+  /* Make the form controls and action buttons easier to tap */
+  .controls{flex-direction:column;gap:8px;align-items:stretch}
+  .btn{width:100%;box-sizing:border-box}
+  .btn.secondary{width:100%}
+
+  /* Make sale rows and inputs full width and stacked */
+  .sale-row{flex-direction:column;align-items:stretch;gap:8px}
+  .sale-row input{width:100%}
+  .sale-row .sale-qty, .sale-row .sale-price{width:100%}
+
+  /* Inventory list & tables should be horizontally scrollable, but visually 100% width */
+  .inv-list-wrap, .table-responsive{overflow:auto;padding-bottom:6px}
+  table{min-width:520px} /* allow scroll if needed */
+
+  /* Labels and other wide blocks should take full width */
+  .label-sheet, .label-grid, #labels-output{width:100%}
+
+  /* Hide small floating install button if present (prevents overlap) */
+  #install-btn{display:none !important}
+
+  /* Remove extra left/right margins that cause the narrow centered columns */
+  .header-left, .site-header, .right{margin:0;padding:6px}
+
+  /* Reduce large font sizes so content fits better */
+  .title{font-size:20px !important}
+  .subtitle{font-size:12px !important}
+  .small{font-size:12px !important}
+}
+
 </style>
 </head>
 <body>
