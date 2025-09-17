@@ -108,25 +108,66 @@
 
   /* Make tables scroll horizontally on small screens */
   .table-responsive{overflow:auto}
-
-  /* Small screens adjustments */
-  @media (max-width:900px){
-    .label-grid{grid-template-columns:repeat(3,1fr)}
-    .hot-logo{width:40px;height:40px}
-    .title{font-size:15px}
+/* ---------- Mobile / small-screen fixes (replace previous media rules) ---------- */
+/* Force header to stack and center on small screens */
+@media (max-width: 900px) {
+  .site-header{
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:14px 12px;
+    gap:8px;
   }
-  @media (max-width:640px){
-    main{padding:12px}
-    .tabs{gap:6px}
-    .label-grid{grid-template-columns:repeat(2,1fr)}
-    .sale-row{align-items:flex-start}
-    .sale-row .sale-qty, .sale-row .sale-price{width:100%}
-    .right{margin-left:0;order:3;width:100%}
-    .controls{flex-direction:row;gap:8px}
-    table th,table td{padding:8px;font-size:13px}
-    .header-right{display:none} /* hide right text to save space on mobile */
-  }
+  .header-left{flex-direction:row;align-items:center;gap:10px;justify-content:center}
+  .hot-logo{width:48px;height:48px}
+  .title{font-size:18px}
+  .subtitle{font-size:12px}
+  .header-right{display:none}
+}
 
+/* Strong mobile layout for narrow screens */
+@media (max-width: 640px) {
+  /* header/hero */
+  .site-header{padding:12px 10px}
+  .header-left{flex-direction:column;gap:8px;align-items:center}
+  .hot-logo{width:56px;height:56px;border-radius:10px}
+  .title{font-size:18px;font-weight:800}
+  .subtitle{display:block;color:rgba(255,255,255,0.9);font-size:12px}
+
+  /* Tabs centered and wrapped */
+  .tabs{justify-content:center;gap:8px;margin-bottom:12px}
+
+  /* Main container becomes full width with small padding */
+  main{padding:10px;margin:10px auto;max-width:980px;width:100%}
+
+  /* Make cards full-width and remove large side margins */
+  .card{margin:8px 0;border-radius:12px}
+
+  /* Inventory form — stack vertically and full width */
+  form .row{flex-direction:column}
+  form .row > div{width:100%}
+  .controls{flex-direction:row;flex-wrap:wrap;justify-content:flex-start}
+  .right{margin-left:0;order:3;width:100%}
+
+  /* Sale rows become stacked */
+  .sale-row{flex-direction:column;align-items:stretch}
+  .sale-row input{width:100%}
+  .sale-row .sale-qty, .sale-row .sale-price{width:100%}
+
+  /* Tables: allow horizontal scroll and comfortable spacing */
+  .table-responsive{overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  table th, table td{padding:10px 8px;font-size:14px}
+
+  /* Labels grid — fewer columns */
+  .label-grid{grid-template-columns:repeat(2,1fr);gap:6mm}
+
+  /* Hide install hint card box on small screens (optional) */
+  #section-data ~ .card, /* generic fallback */ 
+  #hot-install-modal { /* keep modal behavior */ }
+
+  /* Reduce other text sizes */
+  .small{font-size:12px}
+}
   /* Print */
   @media print{
     header, .tabs, .btn, .controls{display:none}
