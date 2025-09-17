@@ -1,158 +1,188 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>House Of Tara — Offline Inventory & POS</title>
-
-<!-- IMPORTANT: relative path (no leading slash) -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7b3f98">
-
-<style>
-:root{--accent:#7b3f98;--muted:#666}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f6f8;color:#222}
-header{background:var(--accent);color:white;padding:12px 18px;display:flex;align-items:center;gap:12px}
-header h1{font-size:18px;margin:0}
-main{padding:18px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tabs button{background:white;border-radius:8px;padding:8px 12px;border:1px solid rgba(0,0,0,0.08);cursor:pointer}
-.card{background:white;padding:14px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-top:12px}
-form .row{display:flex;gap:8px;flex-wrap:wrap}
-label{font-size:13px;color:var(--muted)}
-input,select,button{padding:8px;border-radius:6px;border:1px solid #ddd}
-table{width:100%;border-collapse:collapse}
-table th,table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-.small{font-size:13px;color:var(--muted)}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-.btn.secondary{background:#eee;color:#222}
-.right{margin-left:auto}
-@media print{ header, .tabs, .btn, .controls{display:none} .label{border:1px solid #000} }
-.label-sheet{width:210mm;height:297mm;padding:12mm;box-sizing:border-box}
-.label-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6mm}
-.label-cell{border:1px dashed transparent;padding:4mm;display:flex;flex-direction:column;justify-content:center;align-items:center}
-.barcode-canvas{width:100%;height:28mm}
-.sale-rows{display:flex;flex-direction:column;gap:6px}
-.sale-row{display:flex;gap:6px;align-items:center}
-.sale-row input{flex:1}
-.install-hint{position:fixed;left:16px;bottom:18px;padding:8px 10px;background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);font-size:13px}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>House Of Tara — Offline Inventory & POS</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7b3f98">
+  <style>
+    :root{--accent:#7b3f98;--muted:#666}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f6f6f8;color:#222}
+    header{background:var(--accent);color:white;padding:12px 18px;display:flex;align-items:center;gap:12px}
+    header h1{font-size:18px;margin:0}
+    main{padding:18px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tabs button{background:white;border-radius:8px;padding:8px 12px;border:1px solid rgba(0,0,0,0.08);cursor:pointer}
+    .card{background:white;padding:14px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-top:12px}
+    form .row{display:flex;gap:8px;flex-wrap:wrap}
+    label{font-size:13px;color:var(--muted)}
+    input,select,button,textarea{padding:8px;border-radius:6px;border:1px solid #ddd}
+    table{width:100%;border-collapse:collapse}
+    table th,table td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+    .small{font-size:13px;color:var(--muted)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    .btn.secondary{background:#eee;color:#222}
+    .right{margin-left:auto}
+    @media print{ header, .tabs, .btn, .controls{display:none} .label{border:1px solid #000} }
+    .label-sheet{width:210mm;height:297mm;padding:12mm;box-sizing:border-box}
+    .label-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6mm}
+    .label-cell{border:1px dashed transparent;padding:4mm;display:flex;flex-direction:column;justify-content:center;align-items:center}
+    .barcode-canvas{width:100%;height:28mm}
+    .sale-rows{display:flex;flex-direction:column;gap:6px}
+    .sale-row{display:flex;gap:6px;align-items:center}
+    .sale-row input{flex:1}
+    /* Install modal styles */
+    #hot-install-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); z-index:99999; }
+    #hot-install-modal .card { background:#fff; padding:18px; border-radius:10px; width:320px; box-shadow:0 8px 24px rgba(0,0,0,0.2); text-align:left; font-family:system-ui,Arial; }
+    #hot-install-modal h4{margin:0 0 8px 0}
+    #hot-install-modal p{margin:0 0 12px 0; color:#444; font-size:14px}
+    #hot-install-modal .actions{display:flex;gap:8px; justify-content:flex-end}
+    #hot-install-modal button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    #hot-install-modal .btn-primary{background:#7b3f98;color:#fff}
+    #hot-install-modal .btn-secondary{background:#eee;color:#222}
+    /* iOS hint */
+    #hot-ios-hint{ position:fixed; left:12px; right:12px; bottom:18px; background:#fff; border-radius:10px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.12); display:none; z-index:99998; font-family:system-ui,Arial; }
+    #hot-ios-hint small{display:block;color:#666;margin-top:6px;font-size:12px;}
+  </style>
 </head>
 <body>
-<header>
-  <h1>House Of Tara — Offline Inventory & POS</h1>
-  <div class="right small">Offline — data stored locally in your browser (IndexedDB)</div>
-</header>
+  <header>
+    <h1>House Of Tara — Offline Inventory & POS</h1>
+    <div class="right small">Offline — local storage (IndexedDB)</div>
+  </header>
 
-<main>
-  <div class="tabs">
-    <button id="tab-inventory">Add Inventory</button>
-    <button id="tab-check">Check Inventory</button>
-    <button id="tab-sale">Sale</button>
-    <button id="tab-viewsales">View Sales</button>
-    <button id="tab-labels">Labels</button>
-    <button id="tab-data">Data</button>
+  <main>
+    <div class="tabs">
+      <button id="tab-inventory">Add Inventory</button>
+      <button id="tab-check">Check Inventory</button>
+      <button id="tab-sale">Sale</button>
+      <button id="tab-viewsales">View Sales</button>
+      <button id="tab-labels">Labels</button>
+      <button id="tab-data">Data</button>
+    </div>
+
+    <!-- Inventory -->
+    <section id="section-inventory" class="card">
+      <h3>Add / Edit Inventory</h3>
+      <form id="form-inv">
+        <div class="row">
+          <div style="flex:1">
+            <label>Product Name</label><br>
+            <input id="p-name" required />
+          </div>
+          <div style="width:160px">
+            <label>SKU</label><br>
+            <input id="p-sku" required />
+          </div>
+          <div style="width:120px">
+            <label>Cost Price</label><br>
+            <input id="p-cost" type="number" step="0.01" required />
+          </div>
+          <div style="width:120px">
+            <label>Selling Price</label><br>
+            <input id="p-sell" type="number" step="0.01" required />
+          </div>
+          <div style="width:100px">
+            <label>Stock</label><br>
+            <input id="p-stock" type="number" step="1" value="0" required />
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn" type="submit">Save Item</button>
+          <button class="btn secondary" type="button" id="inv-clear">Clear Form</button>
+        </div>
+      </form>
+
+      <div class="card" style="margin-top:12px">
+        <h4>Inventory List (select for labels)</h4>
+        <div id="inv-list"></div>
+      </div>
+    </section>
+
+    <!-- Check Inventory -->
+    <section id="section-check" class="card" style="display:none">
+      <h3>Check Inventory</h3>
+      <label>Search by Name or SKU</label><br>
+      <input id="search-inv" placeholder="Type name or SKU" style="width:100%;margin-top:6px" />
+      <div class="card" style="margin-top:12px">
+        <table id="table-check"><thead><tr><th>SKU</th><th>Name</th><th>Stock</th><th>Cost</th><th>Selling</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- Sale -->
+    <section id="section-sale" class="card" style="display:none">
+      <h3>Sale / POS</h3>
+      <label>Customer Name</label><br>
+      <input id="sale-cust" placeholder="Customer name (optional)" style="width:100%;margin-top:6px" />
+      <div class="card" style="margin-top:10px">
+        <div class="sale-rows" id="sale-rows"></div>
+        <div class="controls">
+          <button class="btn" id="add-sale-row" type="button">Add Product Row</button>
+          <button class="btn secondary" id="clear-sale" type="button">Clear Rows</button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <div style="font-weight:600">Total: ₹ <span id="sale-total">0.00</span></div>
+          <div class="right">
+            <button class="btn" id="submit-sale">Submit Sale (Save & Print)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View Sales -->
+    <section id="section-viewsales" class="card" style="display:none">
+      <h3>View Sales</h3>
+      <div id="sales-list"></div>
+    </section>
+
+    <!-- Labels -->
+    <section id="section-labels" class="card" style="display:none">
+      <h3>Labels</h3>
+      <div class="small">Select items in Add Inventory, then click Create Labels — 24 labels per A4.</div>
+      <div class="controls" style="margin-top:8px">
+        <button class="btn" id="create-labels">Create Labels</button>
+        <button class="btn secondary" id="clear-selection">Clear Selection</button>
+      </div>
+      <div id="labels-output" style="margin-top:12px"></div>
+    </section>
+
+    <!-- Data -->
+    <section id="section-data" class="card" style="display:none">
+      <h3>Data — Export / Import / Migrate</h3>
+      <div class="controls">
+        <button class="btn" id="export-inv">Export Inventory (JSON)</button>
+        <button class="btn" id="export-sales">Export Sales (JSON)</button>
+        <label class="btn secondary" style="cursor:pointer"><input id="import-file" type="file" accept=".json" style="display:none"> Import JSON</label>
+        <button class="btn secondary" id="migrate">Migrate from localStorage (if any)</button>
+      </div>
+      <div style="margin-top:12px" id="data-msg"></div>
+    </section>
+  </main>
+
+  <!-- Install button (floating) -->
+  <button id="install-btn" style="position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:10px;background:#7b3f98;color:#fff;border:none;display:none;z-index:9999;">Install App</button>
+
+  <!-- Install modal + iOS hint -->
+  <div id="hot-install-modal" aria-hidden="true">
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="hot-install-title">
+      <h4 id="hot-install-title">Install House Of Tara</h4>
+      <p>Install this app on your device for faster access and offline use. Add to home screen?</p>
+      <div class="actions">
+        <button id="hot-install-no" class="btn-secondary">No thanks</button>
+        <button id="hot-install-yes" class="btn-primary">Install</button>
+      </div>
+    </div>
+  </div>
+  <div id="hot-ios-hint">
+    <div style="font-weight:600">Install House Of Tara</div>
+    <div style="margin-top:6px;color:#444;font-size:14px;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong> in Safari to install.</div>
+    <small>Tip: this installs the app and keeps your inventory safe on the device.</small>
   </div>
 
-  <section id="section-inventory" class="card">
-    <h3>Add / Edit Inventory</h3>
-    <form id="form-inv">
-      <div class="row">
-        <div style="flex:1">
-          <label>Product Name</label><br>
-          <input id="p-name" required />
-        </div>
-        <div style="width:160px">
-          <label>SKU</label><br>
-          <input id="p-sku" required />
-        </div>
-        <div style="width:120px">
-          <label>Cost Price</label><br>
-          <input id="p-cost" type="number" step="0.01" required />
-        </div>
-        <div style="width:120px">
-          <label>Selling Price</label><br>
-          <input id="p-sell" type="number" step="0.01" required />
-        </div>
-        <div style="width:100px">
-          <label>Stock</label><br>
-          <input id="p-stock" type="number" step="1" value="0" required />
-        </div>
-      </div>
-      <div class="controls">
-        <button class="btn" type="submit">Save Item</button>
-        <button class="btn secondary" type="button" id="inv-clear">Clear Form</button>
-      </div>
-    </form>
-    <div class="card" style="margin-top:12px">
-      <h4>Inventory List (select to add to label)</h4>
-      <div id="inv-list"></div>
-    </div>
-  </section>
-
-  <section id="section-check" class="card" style="display:none">
-    <h3>Check Inventory</h3>
-    <label>Search by Name or SKU</label><br>
-    <input id="search-inv" placeholder="Type name or SKU" style="width:100%;margin-top:6px" />
-    <div class="card" style="margin-top:12px">
-      <table id="table-check"><thead><tr><th>SKU</th><th>Name</th><th>Stock</th><th>Cost</th><th>Selling</th></tr></thead><tbody></tbody></table>
-    </div>
-  </section>
-
-  <section id="section-sale" class="card" style="display:none">
-    <h3>Sale / POS</h3>
-    <label>Customer Name</label><br>
-    <input id="sale-cust" placeholder="Customer name (optional)" style="width:100%;margin-top:6px" />
-    <div class="card" style="margin-top:10px">
-      <div class="sale-rows" id="sale-rows"></div>
-      <div class="controls">
-        <button class="btn" id="add-sale-row" type="button">Add Product Row</button>
-        <button class="btn secondary" id="clear-sale" type="button">Clear Rows</button>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-        <div style="font-weight:600">Total: ₹ <span id="sale-total">0.00</span></div>
-        <div class="right">
-          <button class="btn" id="submit-sale">Submit Sale (Save & Print Bill)</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="section-viewsales" class="card" style="display:none">
-    <h3>View Sales</h3>
-    <div id="sales-list"></div>
-  </section>
-
-  <section id="section-labels" class="card" style="display:none">
-    <h3>Labels</h3>
-    <div class="small">Select items below then click <strong>Create Labels</strong> to produce a printable sheet with 24 labels per A4 (4 columns x 6 rows default).</div>
-    <div class="controls" style="margin-top:8px">
-      <button class="btn" id="create-labels">Create Labels</button>
-      <button class="btn secondary" id="clear-selection">Clear Selection</button>
-      <div class="right small">Labels use local copy of JsBarcode if placed as <code>jsbarcode.min.js</code> in the same folder.</div>
-    </div>
-    <div id="labels-output" style="margin-top:12px"></div>
-  </section>
-
-  <section id="section-data" class="card" style="display:none">
-    <h3>Data — Export / Import / Migrate</h3>
-    <div class="controls">
-      <button class="btn" id="export-inv">Export Inventory (JSON)</button>
-      <button class="btn" id="export-sales">Export Sales (JSON)</button>
-      <label class="btn secondary" style="cursor:pointer"><input id="import-file" type="file" accept=".json" style="display:none"> Import JSON</label>
-      <button class="btn secondary" id="migrate">Migrate from localStorage (if any)</button>
-    </div>
-    <div style="margin-top:12px" id="data-msg"></div>
-  </section>
-
-</main>
-
-<!-- Install button -->
-<button id="install-btn" style="position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:10px;background:#7b3f98;color:#fff;border:none;display:none;z-index:9999;">Install App</button>
-
 <script>
-// --- IndexedDB wrapper ---
+/* ---------------- IndexedDB wrapper ---------------- */
 const DB_NAME = 'hot_db_v1';
 const DB_VERSION = 1;
 const STORE_INV = 'inventory';
@@ -175,7 +205,6 @@ function openDB(){
     req.onerror = () => reject(req.error);
   });
 }
-
 async function idbPut(store, value){
   const db = await openDB();
   return new Promise((res, rej)=>{
@@ -213,7 +242,7 @@ async function idbDelete(store, key){
   });
 }
 
-// --- App logic using IndexedDB ---
+/* ---------------- App logic ---------------- */
 async function saveInvItem(item){
   await idbPut(STORE_INV, item);
   await renderInvList();
@@ -237,8 +266,15 @@ async function saveSale(entry){
   await renderSalesList();
 }
 
-// --- UI & interactions ---
-const tabs = {inv:document.getElementById('section-inventory'), check:document.getElementById('section-check'), sale:document.getElementById('section-sale'), viewsales:document.getElementById('section-viewsales'), labels:document.getElementById('section-labels'), data:document.getElementById('section-data')};
+/* ---------------- UI Tabs ---------------- */
+const tabs = {
+  inv:document.getElementById('section-inventory'),
+  check:document.getElementById('section-check'),
+  sale:document.getElementById('section-sale'),
+  viewsales:document.getElementById('section-viewsales'),
+  labels:document.getElementById('section-labels'),
+  data:document.getElementById('section-data')
+};
 function showTab(key){ Object.values(tabs).forEach(s=>s.style.display='none'); tabs[key].style.display='block'; }
 document.getElementById('tab-inventory').onclick=()=>showTab('inv');
 document.getElementById('tab-check').onclick=()=>showTab('check');
@@ -247,7 +283,7 @@ document.getElementById('tab-viewsales').onclick=()=>showTab('viewsales');
 document.getElementById('tab-labels').onclick=()=>showTab('labels');
 document.getElementById('tab-data').onclick=()=>showTab('data');
 
-// Form submit
+/* ---------------- Inventory form ---------------- */
 document.getElementById('form-inv').onsubmit = async function(e){
   e.preventDefault();
   const name=document.getElementById('p-name').value.trim();
@@ -259,8 +295,9 @@ document.getElementById('form-inv').onsubmit = async function(e){
   await saveInvItem({name,sku,cost,sell,stock});
   this.reset();
 };
+document.getElementById('inv-clear').onclick = ()=>document.getElementById('form-inv').reset();
 
-// Inv rendering
+/* ---------------- Render inventory list ---------------- */
 async function renderInvList(){
   const inventory = await getAllInventory();
   const container = document.getElementById('inv-list');
@@ -275,7 +312,7 @@ async function renderInvList(){
   container.querySelectorAll('.del-item').forEach(b=>b.onclick=async (e)=>{ const sku = e.target.dataset.sku; if(confirm('Delete this item?')){ await deleteInvSku(sku); }});
 }
 
-// Check table
+/* ---------------- Check inventory table ---------------- */
 async function renderCheckTable(filter=''){
   const tbody = document.querySelector('#table-check tbody'); tbody.innerHTML='';
   const q = filter.trim().toLowerCase();
@@ -286,7 +323,7 @@ async function renderCheckTable(filter=''){
 }
 document.getElementById('search-inv').addEventListener('input', e=>renderCheckTable(e.target.value));
 
-// Labels
+/* ---------------- Labels ---------------- */
 function getSelectedForLabels(){ const checks = Array.from(document.querySelectorAll('.label-checkbox')); return checks.filter(c=>c.checked).map(c=>c.dataset.sku); }
 document.getElementById('create-labels').onclick = async ()=>{
   const selectedSkus = getSelectedForLabels(); if(!selectedSkus.length){ alert('Select items from Inventory list first (Add Inventory tab)'); return }
@@ -316,7 +353,7 @@ document.getElementById('create-labels').onclick = async ()=>{
 document.getElementById('clear-selection').onclick = ()=>{ document.querySelectorAll('.label-checkbox').forEach(c=>c.checked=false); }
 function renderFallbackBarcode(canvas, text){ const ctx = canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#000'; const w = canvas.width; const h = canvas.height; const seed = text.split('').reduce((a,c)=>a + c.charCodeAt(0),0); let x=4; for(let i=0;i<text.length;i++){ const ch = text.charCodeAt(i); const stripe = (ch + seed) % 6 + 1; ctx.fillRect(x,4,stripe, h-12); x += stripe + 2; if(x> w-10) break; } }
 
-// Sales UI
+/* ---------------- Sales UI ---------------- */
 const saleRowsContainer = document.getElementById('sale-rows');
 function recalcSaleTotal(){ let total=0; document.querySelectorAll('.sale-row').forEach(r=>{ const qty = +r.querySelector('.sale-qty').value || 0; const price = parseFloat(r.querySelector('.sale-price').value) || 0; total += qty * price; }); document.getElementById('sale-total').textContent = total.toFixed(2); }
 
@@ -338,7 +375,7 @@ function addSaleRow(data){ const div = document.createElement('div'); div.classN
 document.getElementById('add-sale-row').onclick = ()=>addSaleRow();
 document.getElementById('clear-sale').onclick = ()=>{ saleRowsContainer.innerHTML=''; recalcSaleTotal(); }
 
-// Submit sale handler
+/* ---------------- Submit sale ---------------- */
 document.getElementById('submit-sale').onclick = async ()=>{
   const rows = Array.from(document.querySelectorAll('.sale-row'));
   if(!rows.length){ alert('Add at least one product'); return }
@@ -355,7 +392,7 @@ document.getElementById('submit-sale').onclick = async ()=>{
   document.getElementById('sale-cust').value=''; saleRowsContainer.innerHTML=''; recalcSaleTotal();
 }
 
-// View sales
+/* ---------------- View sales ---------------- */
 async function renderSalesList(){
   const container = document.getElementById('sales-list');
   const sales = await getAllSales();
@@ -371,21 +408,17 @@ async function renderSalesList(){
   container.innerHTML = html;
 }
 
-/* Replace the old download() with this robust version */
+/* ---------------- Export / Import / Migrate ---------------- */
+function escapeHtmlForPre(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 async function download(filename, content){
   try {
     const blob = new Blob([content], { type: 'application/json' });
 
-    // Try File System Access API (desktop Chrome)
+    // File System Access API (desktop Chrome)
     if (window.showSaveFilePicker) {
       try {
-        const opts = {
-          suggestedName: filename,
-          types: [{
-            description: 'JSON',
-            accept: {'application/json': ['.json']}
-          }]
-        };
+        const opts = { suggestedName: filename, types: [{ description: 'JSON', accept: {'application/json': ['.json']} }] };
         const handle = await window.showSaveFilePicker(opts);
         const writable = await handle.createWritable();
         await writable.write(blob);
@@ -393,11 +426,11 @@ async function download(filename, content){
         alert('Export saved to your device.');
         return;
       } catch (err) {
-        console.warn('FS API save failed, falling back:', err);
+        console.warn('FS API save failed, fallback:', err);
       }
     }
 
-    // Default anchor-download
+    // Anchor download
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -407,60 +440,34 @@ async function download(filename, content){
     a.remove();
     URL.revokeObjectURL(url);
 
-    // iOS standalone fallback
+    // iOS standalone fallback: open JSON in new tab or copy to clipboard
     setTimeout(() => {
       const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
       if (isiOS && isStandalone) {
         const win = window.open();
         if (win) {
-          win.document.write('<pre>' + escapeHtml(content) + '</pre>');
+          win.document.write('<pre>' + escapeHtmlForPre(content) + '</pre>');
           win.document.title = filename;
-          alert('Opened JSON in a new window — save manually on iOS.');
+          alert('Opened JSON in a new window — long-press / save to Files.');
         } else {
-          copyToClipboard(content).then(()=> alert('Copied JSON to clipboard. Paste into a file and save.'));
+          copyToClipboard(content).then(()=> alert('Copied JSON to clipboard — paste into a file.'));
         }
       }
     }, 500);
 
   } catch (err) {
     console.error('Download failed:', err);
-    try {
-      await copyToClipboard(content);
-      alert('Export copied to clipboard. Paste into a text file and save as ' + filename);
-    } catch (e) {
-      alert('Unable to export file automatically. Please copy manually.');
-    }
+    try { await copyToClipboard(content); alert('Export copied to clipboard. Paste into file.'); }
+    catch(e){ alert('Unable to export automatically. Please copy manually.'); }
   }
 }
-
-function escapeHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
 async function copyToClipboard(text){
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    return navigator.clipboard.writeText(text);
-  } else {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    try {
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      return;
-    } catch (err) {
-      document.body.removeChild(ta);
-      throw err;
-    }
-  }
+  if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); document.body.removeChild(ta); return; } catch(e){ document.body.removeChild(ta); throw e; }
 }
 
-}
 document.getElementById('export-inv').onclick = async ()=>{ const inv = await getAllInventory(); download('inventory.json', JSON.stringify(inv,null,2)); };
 document.getElementById('export-sales').onclick = async ()=>{ const s = await getAllSales(); download('sales.json', JSON.stringify(s,null,2)); };
 
@@ -468,213 +475,72 @@ document.getElementById('import-file').addEventListener('change', async (e)=>{
   const f = e.target.files[0]; if(!f) return;
   const txt = await f.text(); try{
     const data = JSON.parse(txt);
-    // determine type (array of items or sales)
-    if(Array.isArray(data) && data.length && data[0].sku) {
-      // inventory import
-      for(const it of data) await idbPut(STORE_INV, it);
-      document.getElementById('data-msg').innerText = 'Imported inventory items.';
-    } else if(Array.isArray(data) && data.length && data[0].id){
-      for(const s of data) await idbPut(STORE_SALES, s);
-      document.getElementById('data-msg').innerText = 'Imported sales.';
-    } else {
-      document.getElementById('data-msg').innerText = 'Unknown JSON format.';
-    }
+    if(Array.isArray(data) && data.length && data[0].sku) { for(const it of data) await idbPut(STORE_INV, it); document.getElementById('data-msg').innerText = 'Imported inventory items.'; }
+    else if(Array.isArray(data) && data.length && data[0].id){ for(const s of data) await idbPut(STORE_SALES, s); document.getElementById('data-msg').innerText = 'Imported sales.'; }
+    else { document.getElementById('data-msg').innerText = 'Unknown JSON format.'; }
     await renderInvList(); await renderSalesList(); await renderCheckTable();
   }catch(err){ document.getElementById('data-msg').innerText = 'Invalid JSON file.'; }
 });
 
 document.getElementById('migrate').onclick = async ()=>{
-  // migrate from localStorage keys used in previous version
   const invRaw = localStorage.getItem('hot_inv_items_v1');
   const salesRaw = localStorage.getItem('hot_sales_v1');
   let migrated = 0;
-  if(invRaw){
-    try{
-      const inv = JSON.parse(invRaw);
-      for(const it of inv){ await idbPut(STORE_INV, it); migrated++; }
-    }catch(e){}
-  }
-  if(salesRaw){
-    try{
-      const s = JSON.parse(salesRaw);
-      for(const sale of s){ await idbPut(STORE_SALES, sale); migrated++; }
-    }catch(e){}
-  }
+  if(invRaw){ try{ const inv = JSON.parse(invRaw); for(const it of inv){ await idbPut(STORE_INV, it); migrated++; } }catch(e){} }
+  if(salesRaw){ try{ const s = JSON.parse(salesRaw); for(const sale of s){ await idbPut(STORE_SALES, sale); migrated++; } }catch(e){} }
   document.getElementById('data-msg').innerText = migrated ? ('Migrated ' + migrated + ' records from localStorage.') : 'No localStorage data found to migrate.';
   await renderInvList(); await renderSalesList(); await renderCheckTable();
 };
 
-// Initialize app: render lists and create one sale row
+/* ---------------- Service Worker registration (relative) ---------------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').then(()=>console.log('SW registered')).catch(err=>console.warn('SW failed', err));
+}
+
+/* ---------------- Install button & custom modal logic ---------------- */
+// standard install button (appears when beforeinstallprompt fires)
+let deferredPrompt = null;
+const installBtn = document.getElementById('install-btn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = 'block';
+  // Also, show our custom modal once if not previously shown
+  try { if(!localStorage.getItem('hot_install_prompt_shown')) { localStorage.setItem('hot_install_prompt_shown','1'); document.getElementById('hot-install-modal').style.display='flex'; } } catch(e){}
+});
+installBtn.addEventListener('click', async () => {
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice;
+  if(choice && choice.outcome === 'accepted'){ try{ localStorage.setItem('hot_installed','1'); }catch(e){} }
+  deferredPrompt = null;
+  installBtn.style.display = 'none';
+});
+window.addEventListener('appinstalled', () => { try{ localStorage.setItem('hot_installed','1'); }catch(e){}; installBtn.style.display='none'; });
+// Custom modal handlers
+const modal = document.getElementById('hot-install-modal');
+const btnYes = document.getElementById('hot-install-yes');
+const btnNo = document.getElementById('hot-install-no');
+const iosHint = document.getElementById('hot-ios-hint');
+function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+btnYes.addEventListener('click', async ()=>{
+  modal.style.display='none';
+  if(deferredPrompt){ deferredPrompt.prompt(); const choice = await deferredPrompt.userChoice; if(choice && choice.outcome === 'accepted'){ try{ localStorage.setItem('hot_installed','1'); }catch(e){} } deferredPrompt = null; installBtn.style.display='none'; }
+  else { // no beforeinstallprompt -> iOS hint
+    if(isIOS() && !isStandalone()){ iosHint.style.display='block'; setTimeout(()=>iosHint.style.display='none', 8000); }
+  }
+});
+btnNo.addEventListener('click', ()=>{ modal.style.display='none'; try{ localStorage.setItem('hot_install_prompt_shown','1'); }catch(e){} });
+
+/* ---------------- Init ---------------- */
 (async function init(){
-  // register service worker (relative path)
-  if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(()=>{}); }
-  await renderInvList(); await renderCheckTable(); await renderSalesList();
-  addSaleRow();
-})();
-</script>
-<!-- Install popup: paste before </body> -->
-<style id="hot-install-style">
-/* Simple modal + banner styles */
-#hot-install-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); z-index:99999; }
-#hot-install-modal .card { background:#fff; padding:18px; border-radius:10px; width:320px; box-shadow:0 8px 24px rgba(0,0,0,0.2); text-align:left; font-family:system-ui,Arial; }
-#hot-install-modal h4{margin:0 0 8px 0}
-#hot-install-modal p{margin:0 0 12px 0; color:#444; font-size:14px}
-#hot-install-modal .actions{display:flex;gap:8px; justify-content:flex-end}
-#hot-install-modal button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-#hot-install-modal .btn-primary{background:#7b3f98;color:#fff}
-#hot-install-modal .btn-secondary{background:#eee;color:#222}
-
-/* iOS hint bar (only shown when iOS and no beforeinstallprompt) */
-#hot-ios-hint{ position:fixed; left:12px; right:12px; bottom:18px; background:#fff; border-radius:10px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.12); display:none; z-index:99998; font-family:system-ui,Arial; }
-#hot-ios-hint small{display:block;color:#666;margin-top:6px;font-size:12px;}
-</style>
-
-<!-- Modal -->
-<div id="hot-install-modal" aria-hidden="true">
-  <div class="card" role="dialog" aria-modal="true" aria-labelledby="hot-install-title">
-    <h4 id="hot-install-title">Install House Of Tara</h4>
-    <p>Install this app on your device for faster access and offline use. Would you like to add it to your home screen?</p>
-    <div class="actions">
-      <button id="hot-install-no" class="btn-secondary">No thanks</button>
-      <button id="hot-install-yes" class="btn-primary">Install</button>
-    </div>
-  </div>
-</div>
-
-<!-- iOS hint -->
-<div id="hot-ios-hint">
-  <div style="font-weight:600">Install House Of Tara</div>
-  <div style="margin-top:6px;color:#444;font-size:14px;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong> to install this app.</div>
-  <small>Tip: this installs the app and keeps your inventory safe on your device.</small>
-</div>
-
-<script>
-(function(){
-  const STORAGE_SHOWN_KEY = 'hot_install_prompt_shown';
-  const STORAGE_INSTALLED_KEY = 'hot_installed';
-  let deferredPrompt = null;
-
-  const modal = document.getElementById('hot-install-modal');
-  const btnYes = document.getElementById('hot-install-yes');
-  const btnNo = document.getElementById('hot-install-no');
-  const iosHint = document.getElementById('hot-ios-hint');
-
-  function isIOS() {
-    return /iphone|ipad|ipod/i.test(navigator.userAgent);
-  }
-  function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  }
-
-  function hasBeenShown() {
-    try { return localStorage.getItem(STORAGE_SHOWN_KEY) === '1'; } catch(e){ return false; }
-  }
-  function markShown() {
-    try { localStorage.setItem(STORAGE_SHOWN_KEY, '1'); } catch(e){}
-  }
-  function markInstalled() {
-    try { localStorage.setItem(STORAGE_INSTALLED_KEY, '1'); } catch(e){}
-  }
-  function isMarkedInstalled() {
-    try { return localStorage.getItem(STORAGE_INSTALLED_KEY) === '1'; } catch(e){ return false; }
-  }
-
-  // show modal helper
-  function showModal(){
-    if(isStandalone() || isMarkedInstalled()) return;
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-  }
-  function hideModal(){
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-  }
-
-  // Show iOS hint banner once
-  function showIOSHintOnce(){
-    if(!isIOS()) return;
-    if(isStandalone() || isMarkedInstalled()) return;
-    if(hasBeenShown()) return; // reuse same flag to not spam
-    iosHint.style.display = 'block';
-    // auto-hide after 8 seconds
-    setTimeout(()=> iosHint.style.display = 'none', 8000);
-    markShown();
-  }
-
-  // handle native beforeinstallprompt
-  window.addEventListener('beforeinstallprompt', (e) => {
-    // Save the event for later.
-    e.preventDefault();
-    deferredPrompt = e;
-
-    // If user already saw the prompt or already installed, don't show
-    if(hasBeenShown() || isStandalone() || isMarkedInstalled()) {
-      // do nothing
-      return;
-    }
-
-    // Show custom modal (and mark shown so we don't show again)
-    markShown();
-    showModal();
-  });
-
-  // If user clicks Install (custom UI)
-  btnYes.addEventListener('click', async () => {
-    hideModal();
-    if(!deferredPrompt) {
-      // no beforeinstallprompt available (e.g. Safari) — show iOS hint instead
-      showIOSHintOnce();
-      return;
-    }
-    try {
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice; // { outcome: 'accepted'|'dismissed' }
-      if(choice && choice.outcome === 'accepted') {
-        // user installed — mark so popup never shows
-        markInstalled();
-      } else {
-        // dismissed — we already set shown flag so don't show again
-      }
-    } catch (err) {
-      console.warn('install prompt error', err);
-    } finally {
-      deferredPrompt = null; // can only be used once
-    }
-  });
-
-  // If user clicks No thanks
-  btnNo.addEventListener('click', () => {
-    hideModal();
-    markShown(); // don't show again
-  });
-
-  // When appinstalled fires, mark installed
-  window.addEventListener('appinstalled', () => {
-    markInstalled();
-    hideModal();
-    // optionally hide built-in install button if you have one
-    try { document.getElementById('install-btn').style.display='none'; } catch(e){}
-  });
-
-  // If page is already installable but beforeinstallprompt fired before our listener,
-  // we can run a quick check: show native recommended only if criteria exist and not shown.
-  // (Chrome DevTools 'Application' tab shows the status — no reliable API to detect installable state)
-  // So we rely mainly on beforeinstallprompt event.
-
-  // iOS: show hint once if beforeinstallprompt never fires (Safari doesn't fire it)
-  // We wait 1.5s on page load; if no beforeinstallprompt seen and it's iOS, show hint
-  setTimeout(()=> {
-    if(!deferredPrompt && isIOS() && !isStandalone() && !hasBeenShown() && !isMarkedInstalled()) {
-      showIOSHintOnce();
-    }
-  }, 1500);
-
-  // Optional: show modal programmatically if you want to trigger later:
-  window.HOTInstallPrompt = {
-    show: function(){ if(!hasBeenShown() && !isMarkedInstalled() && !isStandalone()){ markShown(); showModal(); } },
-    resetShownFlag: function(){ localStorage.removeItem(STORAGE_SHOWN_KEY); },
-  };
-
+  await renderInvList();
+  await renderCheckTable();
+  await renderSalesList();
+  addSaleRow(); // one empty sale row
+  // if iOS and didn't see prompt, show hint once (if not installed)
+  setTimeout(()=>{ if(isIOS() && !isStandalone() && !localStorage.getItem('hot_install_prompt_shown') && !localStorage.getItem('hot_installed')){ iosHint.style.display='block'; localStorage.setItem('hot_install_prompt_shown','1'); setTimeout(()=>iosHint.style.display='none',8000); } }, 1200);
 })();
 </script>
 </body>
