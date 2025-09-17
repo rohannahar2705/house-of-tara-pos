@@ -512,5 +512,170 @@ document.getElementById('migrate').onclick = async ()=>{
   addSaleRow();
 })();
 </script>
+<!-- Install popup: paste before </body> -->
+<style id="hot-install-style">
+/* Simple modal + banner styles */
+#hot-install-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); z-index:99999; }
+#hot-install-modal .card { background:#fff; padding:18px; border-radius:10px; width:320px; box-shadow:0 8px 24px rgba(0,0,0,0.2); text-align:left; font-family:system-ui,Arial; }
+#hot-install-modal h4{margin:0 0 8px 0}
+#hot-install-modal p{margin:0 0 12px 0; color:#444; font-size:14px}
+#hot-install-modal .actions{display:flex;gap:8px; justify-content:flex-end}
+#hot-install-modal button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+#hot-install-modal .btn-primary{background:#7b3f98;color:#fff}
+#hot-install-modal .btn-secondary{background:#eee;color:#222}
+
+/* iOS hint bar (only shown when iOS and no beforeinstallprompt) */
+#hot-ios-hint{ position:fixed; left:12px; right:12px; bottom:18px; background:#fff; border-radius:10px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,0.12); display:none; z-index:99998; font-family:system-ui,Arial; }
+#hot-ios-hint small{display:block;color:#666;margin-top:6px;font-size:12px;}
+</style>
+
+<!-- Modal -->
+<div id="hot-install-modal" aria-hidden="true">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="hot-install-title">
+    <h4 id="hot-install-title">Install House Of Tara</h4>
+    <p>Install this app on your device for faster access and offline use. Would you like to add it to your home screen?</p>
+    <div class="actions">
+      <button id="hot-install-no" class="btn-secondary">No thanks</button>
+      <button id="hot-install-yes" class="btn-primary">Install</button>
+    </div>
+  </div>
+</div>
+
+<!-- iOS hint -->
+<div id="hot-ios-hint">
+  <div style="font-weight:600">Install House Of Tara</div>
+  <div style="margin-top:6px;color:#444;font-size:14px;">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong> to install this app.</div>
+  <small>Tip: this installs the app and keeps your inventory safe on your device.</small>
+</div>
+
+<script>
+(function(){
+  const STORAGE_SHOWN_KEY = 'hot_install_prompt_shown';
+  const STORAGE_INSTALLED_KEY = 'hot_installed';
+  let deferredPrompt = null;
+
+  const modal = document.getElementById('hot-install-modal');
+  const btnYes = document.getElementById('hot-install-yes');
+  const btnNo = document.getElementById('hot-install-no');
+  const iosHint = document.getElementById('hot-ios-hint');
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function hasBeenShown() {
+    try { return localStorage.getItem(STORAGE_SHOWN_KEY) === '1'; } catch(e){ return false; }
+  }
+  function markShown() {
+    try { localStorage.setItem(STORAGE_SHOWN_KEY, '1'); } catch(e){}
+  }
+  function markInstalled() {
+    try { localStorage.setItem(STORAGE_INSTALLED_KEY, '1'); } catch(e){}
+  }
+  function isMarkedInstalled() {
+    try { return localStorage.getItem(STORAGE_INSTALLED_KEY) === '1'; } catch(e){ return false; }
+  }
+
+  // show modal helper
+  function showModal(){
+    if(isStandalone() || isMarkedInstalled()) return;
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+  }
+  function hideModal(){
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  // Show iOS hint banner once
+  function showIOSHintOnce(){
+    if(!isIOS()) return;
+    if(isStandalone() || isMarkedInstalled()) return;
+    if(hasBeenShown()) return; // reuse same flag to not spam
+    iosHint.style.display = 'block';
+    // auto-hide after 8 seconds
+    setTimeout(()=> iosHint.style.display = 'none', 8000);
+    markShown();
+  }
+
+  // handle native beforeinstallprompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Save the event for later.
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // If user already saw the prompt or already installed, don't show
+    if(hasBeenShown() || isStandalone() || isMarkedInstalled()) {
+      // do nothing
+      return;
+    }
+
+    // Show custom modal (and mark shown so we don't show again)
+    markShown();
+    showModal();
+  });
+
+  // If user clicks Install (custom UI)
+  btnYes.addEventListener('click', async () => {
+    hideModal();
+    if(!deferredPrompt) {
+      // no beforeinstallprompt available (e.g. Safari) — show iOS hint instead
+      showIOSHintOnce();
+      return;
+    }
+    try {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice; // { outcome: 'accepted'|'dismissed' }
+      if(choice && choice.outcome === 'accepted') {
+        // user installed — mark so popup never shows
+        markInstalled();
+      } else {
+        // dismissed — we already set shown flag so don't show again
+      }
+    } catch (err) {
+      console.warn('install prompt error', err);
+    } finally {
+      deferredPrompt = null; // can only be used once
+    }
+  });
+
+  // If user clicks No thanks
+  btnNo.addEventListener('click', () => {
+    hideModal();
+    markShown(); // don't show again
+  });
+
+  // When appinstalled fires, mark installed
+  window.addEventListener('appinstalled', () => {
+    markInstalled();
+    hideModal();
+    // optionally hide built-in install button if you have one
+    try { document.getElementById('install-btn').style.display='none'; } catch(e){}
+  });
+
+  // If page is already installable but beforeinstallprompt fired before our listener,
+  // we can run a quick check: show native recommended only if criteria exist and not shown.
+  // (Chrome DevTools 'Application' tab shows the status — no reliable API to detect installable state)
+  // So we rely mainly on beforeinstallprompt event.
+
+  // iOS: show hint once if beforeinstallprompt never fires (Safari doesn't fire it)
+  // We wait 1.5s on page load; if no beforeinstallprompt seen and it's iOS, show hint
+  setTimeout(()=> {
+    if(!deferredPrompt && isIOS() && !isStandalone() && !hasBeenShown() && !isMarkedInstalled()) {
+      showIOSHintOnce();
+    }
+  }, 1500);
+
+  // Optional: show modal programmatically if you want to trigger later:
+  window.HOTInstallPrompt = {
+    show: function(){ if(!hasBeenShown() && !isMarkedInstalled() && !isStandalone()){ markShown(); showModal(); } },
+    resetShownFlag: function(){ localStorage.removeItem(STORAGE_SHOWN_KEY); },
+  };
+
+})();
+</script>
 </body>
 </html>
