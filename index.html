@@ -20,16 +20,17 @@
   html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);-webkit-font-smoothing:antialiased}
   body{display:flex;flex-direction:column;min-height:100vh}
 
-  /* Header */
+  /* Header - centered */
   header.app-header{
     background:linear-gradient(90deg,var(--brand-deep), #17694f 60%);
     color:white;
-    padding:10px 12px;
+    padding:12px;
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:10px;
     justify-content:center;
     flex-direction:column;
+    text-align:center;
   }
   .header-row{display:flex;align-items:center;gap:12px;justify-content:center;width:100%}
   .hot-logo{width:56px;height:56px;border-radius:10px;object-fit:cover;box-shadow:0 6px 18px rgba(0,0,0,0.18)}
@@ -68,10 +69,6 @@
   .label-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
   .label-sheet{padding:8px;border-radius:8px}
 
-  /* Install modal/hints */
-  #hot-install-modal{display:none;position:fixed;left:12px;right:12px;top:20%;z-index:9999}
-  #hot-ios-hint{display:none;position:fixed;left:12px;right:12px;top:18%;z-index:9999}
-
   /* Top tabs (hidden on narrow screens) */
   .tabs{display:none;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 0}
   .tabs button{background:var(--card);border-radius:10px;padding:8px 10px;border:1px solid rgba(0,0,0,0.06);font-weight:700}
@@ -82,14 +79,10 @@
   nav.bottom-nav button span{display:block;margin-top:4px}
   nav.bottom-nav button.active{color:var(--brand-deep);font-weight:700}
 
-  /* Floating install button - hidden by default on mobile (we show inline modal) */
-  #install-btn{display:none}
-
   /* Slightly larger screens: show top tabs and hide bottom nav */
   @media(min-width:740px){
     .tabs{display:flex}
     nav.bottom-nav{display:none}
-    #install-btn{display:block;position:fixed;right:16px;bottom:16px}
     main.app{padding-bottom:20px}
   }
 
@@ -102,7 +95,7 @@
 
   /* Printing */
   @media print{
-    nav.bottom-nav, #install-btn, #hot-install-modal, #hot-ios-hint {display:none}
+    nav.bottom-nav {display:none}
   }
 </style>
 </head>
@@ -116,7 +109,6 @@
       <div class="app-sub">Offline Inventory & POS</div>
     </div>
   </div>
-  <div style="margin-top:6px;font-size:12px;color:rgba(255,255,255,0.95)">Installable — use browser menu or the prompt</div>
 </header>
 
 <main class="app">
@@ -159,11 +151,10 @@
         <button class="btn" type="submit">Save Item</button>
         <button class="btn secondary" type="button" id="inv-clear">Clear Form</button>
       </div>
-
     </form>
 
     <div class="card" style="margin-top:12px;padding:10px">
-      <div class="small muted">Inventory List (select items to generate labels)</div>
+      <div class="small">Inventory List (select items to generate labels)</div>
       <div id="inv-list" class="inv-list" style="margin-top:8px">No items yet.</div>
     </div>
   </section>
@@ -234,32 +225,13 @@
 
 <!-- Bottom navigation -->
 <nav class="bottom-nav" role="navigation">
-  <button data-tab="inv" class="active">Inventory <span></span></button>
-  <button data-tab="check">Check <span></span></button>
-  <button data-tab="sale">Sale <span></span></button>
-  <button data-tab="viewsales">Sales <span></span></button>
-  <button data-tab="labels">Labels <span></span></button>
-  <button data-tab="data">Data <span></span></button>
+  <button data-tab="inv" class="active">Inventory</button>
+  <button data-tab="check">Check</button>
+  <button data-tab="sale">Sale</button>
+  <button data-tab="viewsales">Sales</button>
+  <button data-tab="labels">Labels</button>
+  <button data-tab="data">Data</button>
 </nav>
-
-<!-- Hidden install button and modals -->
-<button id="install-btn" style="display:none">Install</button>
-<div id="hot-install-modal" aria-hidden="true" style="display:none">
-  <div class="card" role="dialog" aria-modal="true" aria-labelledby="hot-install-title">
-    <h4 id="hot-install-title">Install House Of Tara</h4>
-    <p>Install this app on your device for faster access and offline use. Add to home screen?</p>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="hot-install-no" class="btn secondary">No thanks</button>
-      <button id="hot-install-yes" class="btn">Install</button>
-    </div>
-  </div>
-</div>
-<div id="hot-ios-hint" style="display:none">
-  <div class="card" role="note">
-    <div style="font-weight:700">Install House Of Tara</div>
-    <div style="margin-top:6px;color:#444">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong> in Safari to install.</div>
-  </div>
-</div>
 
 <script>
 /* ---------------- IndexedDB wrapper ---------------- */
@@ -346,7 +318,7 @@ async function saveSale(entry){
   await renderSalesList();
 }
 
-/* ---------------- UI: Tabs & Nav ---------------- */
+/* ---------------- UI: Sections & Nav ---------------- */
 const sections = {
   inv: document.getElementById('section-inventory'),
   check: document.getElementById('section-check'),
@@ -359,20 +331,12 @@ function showSection(key){
   Object.values(sections).forEach(s => s.style.display = 'none');
   const el = sections[key];
   if(el) el.style.display = 'block';
-  // update active on bottom nav
   document.querySelectorAll('nav.bottom-nav button').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`nav.bottom-nav button[data-tab="${key}"]`);
   if(btn) btn.classList.add('active');
-  // also update top tabs active if present
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-  const top = document.getElementById('tab-' + (key === 'inv' ? 'inventory' : (key === 'viewsales' ? 'viewsales' : key)));
-  if(top) top.classList.add('active');
-  // scroll to top of main
   window.scrollTo({top:0,behavior:'smooth'});
 }
-// bottom nav click
 document.querySelectorAll('nav.bottom-nav button').forEach(b => b.addEventListener('click', ()=> showSection(b.dataset.tab)));
-// top tabs (if visible)
 const mapTop = {
   'tab-inventory': 'inv',
   'tab-check': 'check',
@@ -404,7 +368,7 @@ document.getElementById('inv-clear').onclick = ()=> document.getElementById('for
 async function renderInvList(){
   const inventory = await getAllInventory();
   const container = document.getElementById('inv-list');
-  if(!inventory || !inventory.length){ container.innerHTML = '<div class="center small muted">No items yet.</div>'; return; }
+  if(!inventory || !inventory.length){ container.innerHTML = '<div class="center small">No items yet.</div>'; return; }
   let html = '<div class="table-responsive"><table><thead><tr><th></th><th>SKU</th><th>Name</th><th>Stock</th><th>Cost</th><th>Selling</th><th>Actions</th></tr></thead><tbody>';
   inventory.forEach(it=>{
     html += `<tr><td><input data-sku="${it.sku}" type="checkbox" class="label-checkbox" /></td><td>${it.sku}</td><td>${it.name}</td><td>${it.stock}</td><td>${it.cost}</td><td>${it.sell}</td><td><button data-sku="${it.sku}" class="edit-item">Edit</button> <button data-sku="${it.sku}" class="del-item">Delete</button></td></tr>`;
@@ -478,7 +442,7 @@ function renderFallbackBarcode(canvas, text){ const ctx = canvas.getContext('2d'
 const saleRowsContainer = document.getElementById('sale-rows');
 function recalcSaleTotal(){ let total=0; document.querySelectorAll('.sale-row').forEach(r=>{ const qty = +r.querySelector('.sale-qty').value || 0; const price = parseFloat(r.querySelector('.sale-price').value) || 0; total += qty * price; }); document.getElementById('sale-total').textContent = total.toFixed(2); }
 
-function addSaleRow(data){
+function addSaleRow(){
   const div = document.createElement('div'); div.className = 'sale-row card';
   div.innerHTML = `
     <div class="h"><input class="sale-sku" placeholder="SKU" /></div>
@@ -488,7 +452,6 @@ function addSaleRow(data){
   `;
   saleRowsContainer.appendChild(div);
   const skuInput = div.querySelector('.sale-sku'); const nameInput = div.querySelector('.sale-name'); const qtyInput = div.querySelector('.sale-qty'); const priceInput = div.querySelector('.sale-price');
-  if(data){ skuInput.value=data.sku; nameInput.value=data.name; qtyInput.value=data.qty||1; priceInput.value=data.price; }
   skuInput.addEventListener('change', async e=>{ const sku = e.target.value.trim(); const found = await idbGet(STORE_INV, sku); if(found){ nameInput.value = found.name; priceInput.value = found.sell; } else nameInput.value=''; recalcSaleTotal(); });
   priceInput.addEventListener('input', recalcSaleTotal); qtyInput.addEventListener('input', recalcSaleTotal);
   div.querySelector('.sale-del').addEventListener('click', ()=>{ div.remove(); recalcSaleTotal(); });
@@ -527,7 +490,7 @@ document.getElementById('submit-sale').addEventListener('click', async ()=>{
 async function renderSalesList(){
   const container = document.getElementById('sales-list');
   const sales = await getAllSales();
-  if(!sales || !sales.length){ container.innerHTML = '<div class="center small muted">No sales yet.</div>'; return; }
+  if(!sales || !sales.length){ container.innerHTML = '<div class="center small">No sales yet.</div>'; return; }
   let html = '<div class="table-responsive"><table><thead><tr><th>Sale ID</th><th>Date</th><th>Items</th><th>Total</th><th>Profit</th></tr></thead><tbody>';
   sales.slice().reverse().forEach(s=>{
     const date = new Date(s.createdAt).toLocaleString();
@@ -617,39 +580,6 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('service-worker.js').then(()=>console.log('SW registered')).catch(err=>console.warn('SW failed',err));
 }
 
-/* ---------------- Install prompt & modal handling ---------------- */
-let deferredPrompt = null;
-const installBtn = document.getElementById('install-btn');
-window.addEventListener('beforeinstallprompt', (e)=>{
-  e.preventDefault();
-  deferredPrompt = e;
-  installBtn.style.display = 'block';
-  try{ if(!localStorage.getItem('hot_install_prompt_shown')){ localStorage.setItem('hot_install_prompt_shown','1'); document.getElementById('hot-install-modal').style.display='block'; } }catch(e){}
-});
-installBtn.addEventListener('click', async ()=>{
-  if(!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const choice = await deferredPrompt.userChoice;
-  if(choice && choice.outcome === 'accepted'){ try{ localStorage.setItem('hot_installed','1'); }catch(e){} }
-  deferredPrompt = null; installBtn.style.display='none';
-});
-window.addEventListener('appinstalled', ()=>{ try{ localStorage.setItem('hot_installed','1'); }catch(e){}; installBtn.style.display='none'; });
-
-const modalEl = document.getElementById('hot-install-modal');
-const btnYes = document.getElementById('hot-install-yes');
-const btnNo = document.getElementById('hot-install-no');
-const iosHint = document.getElementById('hot-ios-hint');
-function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
-function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
-if(btnYes){
-  btnYes.addEventListener('click', async ()=>{
-    modalEl.style.display='none';
-    if(deferredPrompt){ deferredPrompt.prompt(); const choice = await deferredPrompt.userChoice; if(choice && choice.outcome === 'accepted'){ try{ localStorage.setItem('hot_installed','1'); }catch(e){} } deferredPrompt = null; installBtn.style.display='none'; }
-    else { if(isIOS() && !isStandalone()){ iosHint.style.display='block'; setTimeout(()=>iosHint.style.display='none',8000); } }
-  });
-}
-if(btnNo) btnNo.addEventListener('click', ()=>{ modalEl.style.display='none'; try{ localStorage.setItem('hot_install_prompt_shown','1'); }catch(e){} });
-
 /* ---------------- Init ---------------- */
 (async function init(){
   await renderInvList();
@@ -657,15 +587,6 @@ if(btnNo) btnNo.addEventListener('click', ()=>{ modalEl.style.display='none'; tr
   await renderSalesList();
   addSaleRow();
   showSection('inv');
-
-  // Show iOS hint once if appropriate
-  setTimeout(()=>{
-    if(isIOS() && !isStandalone() && !localStorage.getItem('hot_install_prompt_shown') && !localStorage.getItem('hot_installed')){
-      iosHint.style.display='block';
-      localStorage.setItem('hot_install_prompt_shown','1');
-      setTimeout(()=>iosHint.style.display='none',8000);
-    }
-  }, 1200);
 })();
 </script>
 
